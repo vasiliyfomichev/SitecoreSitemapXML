@@ -108,7 +108,11 @@ namespace Sitemap.XML.Models
             xmlnsAttr.Value = SitemapManagerConfiguration.XmlnsTpl;
             urlsetNode.Attributes.Append(xmlnsAttr);
 
-            doc.AppendChild(urlsetNode);
+	        XmlAttribute xmlnsXhtmlTpl = doc.CreateAttribute("xmlns:xhtml");
+	        xmlnsXhtmlTpl.Value = SitemapManagerConfiguration.XmlnsXhtmlTpl;
+	        urlsetNode.Attributes.Append(xmlnsXhtmlTpl);
+
+			doc.AppendChild(urlsetNode);
 
 
             foreach (var itm in items)
@@ -121,7 +125,11 @@ namespace Sitemap.XML.Models
 
         private XmlDocument BuildSitemapItem(XmlDocument doc, SitemapItem item, Site site)
         {
-            XmlNode urlsetNode = doc.LastChild;
+	        string sitesMultilingual = SitemapManagerConfiguration.SitesMultilingual;
+
+	        var sitesMultilingualList= sitesMultilingual.Split('|').ToList();
+
+			XmlNode urlsetNode = doc.LastChild;
 
             XmlNode urlNode = doc.CreateElement("url");
             urlsetNode.AppendChild(urlNode);
@@ -134,7 +142,30 @@ namespace Sitemap.XML.Models
             urlNode.AppendChild(lastmodNode);
             lastmodNode.AppendChild(doc.CreateTextNode(item.LastModified));
 
-            if (!string.IsNullOrWhiteSpace(item.ChangeFrequency))
+	        var siteIsMultilingual= sitesMultilingualList.FirstOrDefault(x => x.Equals(site.Name));
+
+	        if (siteIsMultilingual != null)
+	        {
+		        if ((item.HrefLangs == null ? false : item.HrefLangs.Count > 0))
+		        {
+			        foreach (SitemapItemHrefLang hrefLang in item.HrefLangs)
+			        {
+				        XmlElement xmlElement = doc.CreateElement("xhtml", "link", SitemapManagerConfiguration.XmlnsXhtmlTpl);
+				        XmlAttribute xmlAttribute = doc.CreateAttribute("rel");
+				        xmlAttribute.Value = "alternate";
+				        xmlElement.Attributes.Append(xmlAttribute);
+				        xmlAttribute = doc.CreateAttribute("hreflang");
+				        xmlAttribute.Value = hrefLang.HrefLang;
+				        xmlElement.Attributes.Append(xmlAttribute);
+				        xmlAttribute = doc.CreateAttribute("href");
+				        xmlAttribute.Value = hrefLang.Href;
+				        xmlElement.Attributes.Append(xmlAttribute);
+				        urlNode.AppendChild(xmlElement);
+			        }
+		        }
+	        }
+
+	        if (!string.IsNullOrWhiteSpace(item.ChangeFrequency))
             {
                 XmlNode changeFrequencyNode = doc.CreateElement("changefreq");
                 urlNode.AppendChild(changeFrequencyNode);
@@ -191,7 +222,6 @@ namespace Sitemap.XML.Models
             StreamWriter strWriter = new StreamWriter(fullPath, false);
             strWriter.Write(xmlContent);
             strWriter.Close();
-
         }
 
         private List<SitemapItem> GetSitemapItems(string rootPath)

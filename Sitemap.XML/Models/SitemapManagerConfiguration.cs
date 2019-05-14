@@ -49,11 +49,19 @@ namespace Sitemap.XML.Models
             SiteName = siteName;
         }
 
-        #endregion
+		#endregion
 
-        #region Properties
+		#region Properties
 
-        public static string XmlnsTpl
+		public static string SitesMultilingual
+		{
+			get
+			{
+				return GetValueByName("sitesMultilingual");
+			}
+		}
+
+		public static string XmlnsTpl
         {
             get
             {
@@ -61,7 +69,15 @@ namespace Sitemap.XML.Models
             }
         }
 
-        public static string WorkingDatabase
+	    public static string XmlnsXhtmlTpl
+		{
+		    get
+		    {
+			    return GetValueByName("xmlnsXhtmlTpl");
+		    }
+	    }
+
+		public static string WorkingDatabase
         {
             get
             {
