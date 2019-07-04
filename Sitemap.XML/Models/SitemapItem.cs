@@ -90,7 +90,7 @@ namespace Sitemap.XML.Models
         public static string GetSharedItemUrl(Item item, SiteContext site)
         {
             var parentItem = SitemapManager.GetSharedLocationParent(item);
-            var itemUrl = HtmlEncode(GetItemUrl(item, site));
+			var itemUrl = HtmlEncode(GetItemUrl(item, site));
             var parentUrl = HtmlEncode(GetItemUrl(parentItem, site));
             parentUrl = parentUrl.EndsWith("/") ? parentUrl : parentUrl + "/";
             var pos = itemUrl.LastIndexOf("/") + 1;
@@ -127,11 +127,11 @@ namespace Sitemap.XML.Models
             
             if (serverUrl.Contains("http://"))
             {
-                serverUrl = serverUrl.Substring("http://".Length);
+				serverUrl = serverUrl.Substring("http://".Length);
             }
             else if (serverUrl.Contains("https://"))
             {
-                serverUrl = serverUrl.Substring("https://".Length);
+				serverUrl = serverUrl.Substring("https://".Length);
             }
 
             StringBuilder sb = new StringBuilder();
@@ -140,27 +140,27 @@ namespace Sitemap.XML.Models
             {
                 if (url.Contains("://") && !url.Contains("http"))
                 {
-                    sb.Append("http://");
+					sb.Append("http://");
                     sb.Append(serverUrl);
                     if (url.IndexOf("/", 3) > 0)
                         sb.Append(url.Substring(url.IndexOf("/", 3)));
                 }
                 else
                 {
-                    sb.Append("http://");
+					sb.Append("http://");
                     sb.Append(serverUrl);
                     sb.Append(url);
                 }
             }
             else if (!string.IsNullOrEmpty(site.Properties["hostname"]))
             {
-                sb.Append("http://");
+				sb.Append("http://");
                 sb.Append(site.Properties["hostname"]);
                 sb.Append(url);
             }
             else
             {
-                if (url.Contains("://") && !url.Contains("http"))
+				if (url.Contains("://") && !url.Contains("http"))
                 {
                     sb.Append("http://");
                     sb.Append(url);
@@ -170,8 +170,7 @@ namespace Sitemap.XML.Models
                     sb.Append(Sitecore.Web.WebUtil.GetFullUrl(url));
                 }
             }
-
-            return sb.ToString();
+			return sb.ToString();
 
         }
 

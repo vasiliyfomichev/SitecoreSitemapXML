@@ -112,6 +112,7 @@ namespace Sitemap.XML.Models
         }
 
         public string EnabledTemplates => GetValueByNameFromDatabase(Constants.WebsiteDefinition.EnabledTemplatesFieldName);
+	    public string ExcludedItems => GetValueByNameFromDatabase(Constants.WebsiteDefinition.ExcludedItemsFieldName);
 
         public bool CleanupBucketPath => GetValueByNameFromDatabase(Constants.WebsiteDefinition.CleanupBucketPath) == "1";
 

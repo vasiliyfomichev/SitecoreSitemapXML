@@ -227,6 +227,7 @@ namespace Sitemap.XML.Models
         private List<SitemapItem> GetSitemapItems(string rootPath)
         {
             string disTpls = _config.EnabledTemplates;
+	        string excludeItemsField = _config.ExcludedItems;
 
             Database database = Factory.GetDatabase(SitemapManagerConfiguration.WorkingDatabase);
 
@@ -245,6 +246,7 @@ namespace Sitemap.XML.Models
             var sharedDefinitions = Db.SelectItems(string.Format("fast:{0}/*", _config.SitemapConfigurationItemPath));
             var site = Factory.GetSite(_config.SiteName);
             var enabledTemplates = BuildListFromString(disTpls, '|');
+	        var excludeItems = BuildListFromString(excludeItemsField, '|');
             foreach (var sharedDefinition in sharedDefinitions)
             {
                 if (string.IsNullOrWhiteSpace(sharedDefinition[Constants.SharedContent.ContentLocationFieldName]) ||
@@ -272,6 +274,7 @@ namespace Sitemap.XML.Models
 
                 var cleanedSharedItems = from itm in sharedItems
                                          where itm.Template != null && enabledTemplates.Select(t => t.ToLower()).Contains(itm.Template.ID.ToString().ToLower())
+                                                                    && !excludeItems.Contains(itm.ID.ToString())
                                          select itm;
                 var sharedSitemapItems = cleanedSharedItems.Select(i => new SitemapItem(i, site, parentItem));
                 sharedModels.AddRange(sharedSitemapItems);
@@ -282,6 +285,7 @@ namespace Sitemap.XML.Models
 
             var selected = from itm in sitemapItems
                            where itm.Template != null && enabledTemplates.Contains(itm.Template.ID.ToString())
+								 && !excludeItems.Contains(itm.ID.ToString())
                            select itm;
 
             var selectedModels = selected.Select(i => new SitemapItem(i, site, null)).ToList();
@@ -292,8 +296,8 @@ namespace Sitemap.XML.Models
 
         private static List<string> BuildListFromString(string str, char separator)
         {
-            var enabledTemplates = str.Split(separator);
-            var selected = from dtp in enabledTemplates
+            var separatedValues = str.Split(separator);
+            var selected = from dtp in separatedValues
                            where !string.IsNullOrEmpty(dtp)
                            select dtp;
 
@@ -363,7 +367,8 @@ namespace Sitemap.XML.Models
 
         public static bool IsExcludedItem(Item item)
         {
-            return item[Settings.GetSetting("Sitemap.XML.Fields.ExcludeItemFromSitemap", "Exclude From Sitemap")] == "1";
+	        var config = new SitemapManagerConfiguration(Context.GetSiteName());
+	        return config.ExcludedItems.ToLower().Contains(item.ID.ToGuid().ToString());
         }
 
         public static bool ContainsItemsToShow(IEnumerable<Item> items)
