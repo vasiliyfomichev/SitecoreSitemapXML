@@ -431,15 +431,23 @@ namespace Sitemap.XML.Models
             if (string.IsNullOrWhiteSpace(_config.FileName)) return;
             string robotsPath = MainUtil.MapPath(string.Concat("/", Constants.RobotsFileName));
             StringBuilder sitemapContent = new StringBuilder(string.Empty);
+            
+
             if (File.Exists(robotsPath))
             {
-                StreamReader sr = new StreamReader(robotsPath);
-                sitemapContent.Append(sr.ReadToEnd());
-                sr.Close();
+	            StreamReader sr = new StreamReader(robotsPath);
+	            sitemapContent.Append(sr.ReadToEnd());
+	            sr.Close();
             }
+            else
+            {
+	            sitemapContent.AppendLine("User-agent: *");
+	            sitemapContent.AppendLine("Disallow:");
+			}
 
-            StreamWriter sw = new StreamWriter(robotsPath, false);
-            string sitemapLine = string.Concat("Sitemap: ", _config.FileName);
+			StreamWriter sw = new StreamWriter(robotsPath, false);
+            string sitemapUrl = _config.ServerUrl + "/" + _config.FileName;
+            string sitemapLine = string.Concat("Sitemap: ", sitemapUrl);
             if (!sitemapContent.ToString().Contains(sitemapLine))
             {
                 sitemapContent.AppendLine(sitemapLine);

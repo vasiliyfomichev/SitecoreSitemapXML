@@ -124,15 +124,19 @@ namespace Sitemap.XML.Models
 			string url = Sitecore.Links.LinkManager.GetItemUrl(item, options);
 
             var serverUrl = (new SitemapManagerConfiguration(site.Name)).ServerUrl;
+
+            var isHttps = false;
             
             if (serverUrl.Contains("http://"))
             {
 				serverUrl = serverUrl.Substring("http://".Length);
+				isHttps = false;
             }
             else if (serverUrl.Contains("https://"))
             {
 				serverUrl = serverUrl.Substring("https://".Length);
-            }
+				isHttps = true;
+			}
 
             StringBuilder sb = new StringBuilder();
 
@@ -140,30 +144,42 @@ namespace Sitemap.XML.Models
             {
                 if (url.Contains("://") && !url.Contains("http"))
                 {
-					sb.Append("http://");
-                    sb.Append(serverUrl);
+	                if (isHttps)
+						sb.Append("https://");
+					else
+		                sb.Append("http://");
+					sb.Append(serverUrl);
                     if (url.IndexOf("/", 3) > 0)
                         sb.Append(url.Substring(url.IndexOf("/", 3)));
                 }
                 else
                 {
-					sb.Append("http://");
-                    sb.Append(serverUrl);
+	                if (isHttps)
+		                sb.Append("https://");
+	                else
+		                sb.Append("http://");
+					sb.Append(serverUrl);
                     sb.Append(url);
                 }
             }
             else if (!string.IsNullOrEmpty(site.Properties["hostname"]))
             {
-				sb.Append("http://");
-                sb.Append(site.Properties["hostname"]);
+	            if (isHttps)
+		            sb.Append("https://");
+	            else
+		            sb.Append("http://");
+				sb.Append(site.Properties["hostname"]);
                 sb.Append(url);
             }
             else
             {
 				if (url.Contains("://") && !url.Contains("http"))
                 {
-                    sb.Append("http://");
-                    sb.Append(url);
+					if (isHttps)
+						sb.Append("https://");
+					else
+						sb.Append("http://");
+					sb.Append(url);
                 }
                 else
                 {
