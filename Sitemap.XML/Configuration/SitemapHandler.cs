@@ -1,5 +1,6 @@
 ﻿#region
 
+using System;
 using Sitecore;
 using Sitecore.Caching;
 using Sitecore.Diagnostics;
@@ -21,7 +22,7 @@ namespace Sitemap.XML.Configuration
 
         public override void Process(HttpRequestArgs args)
         {
-            Assert.ArgumentNotNull(args, "args");
+			Assert.ArgumentNotNull(args, "args");
             if (Context.Site == null || string.IsNullOrEmpty(Context.Site.RootPath.Trim())) return;
             if (Context.Page.FilePath.Length > 0) return;
             var sitemapHandler = string.IsNullOrWhiteSpace(Context.Site.Properties["sitemapHandler"])
@@ -56,7 +57,11 @@ namespace Sitemap.XML.Configuration
                 content = sitemapManager.BuildSiteMapForHandler();
                 args.Context.Response.Write(content);
             }
-            finally
+            catch (Exception e)
+            {
+	            Log.Error("Error Sitemap", e, this);
+            }
+			finally
             {
 #if !DEBUG
                 CacheManager.GetHtmlCache(site).SetHtml(cacheKey, content);
