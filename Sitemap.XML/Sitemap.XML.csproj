@@ -78,6 +78,7 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Configuration\RobotHandler.cs" />
     <Compile Include="Configuration\SitemapHandler.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Models\SitemapItem.cs" />

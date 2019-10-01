@@ -138,12 +138,13 @@ namespace Sitemap.XML.Models
         public string SiteName { get; } = string.Empty;
 
         public string FileName => GetValueByNameFromDatabase(Constants.WebsiteDefinition.FileNameFieldName);
+	    public string SitemapNameForRobots => GetValueByNameFromDatabase(Constants.WebsiteDefinition.SitemapNameForRobots);
 
-        #endregion properties
+		#endregion properties
 
-        #region Private Methods
+		#region Private Methods
 
-        private static string GetValueByName(string name)
+		private static string GetValueByName(string name)
         {
             var result = string.Empty;
 

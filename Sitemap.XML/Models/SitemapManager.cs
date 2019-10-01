@@ -456,6 +456,20 @@ namespace Sitemap.XML.Models
             sw.Close();
         }
 
-        #endregion
+	    public string GetRobotSite()
+	    {
+		    StringBuilder sitemapContent = new StringBuilder(string.Empty);
+		    sitemapContent.AppendLine("User-agent: *");
+		    sitemapContent.AppendLine("Disallow:");
+		    string sitemapUrl = _config.ServerUrl + "/" + _config.SitemapNameForRobots;
+		    string sitemapLine = string.Concat("Sitemap: ", sitemapUrl);
+		    if (!sitemapContent.ToString().Contains(sitemapLine))
+		    {
+			    sitemapContent.AppendLine(sitemapLine);
+		    }
+		    return sitemapContent.ToString();
+	    }
+
+	    #endregion
     }
 }
