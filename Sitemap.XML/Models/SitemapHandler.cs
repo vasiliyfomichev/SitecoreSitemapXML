@@ -20,6 +20,7 @@
  * *********************************************************************** */
 
 using System;
+using Sitecore.Diagnostics;
 
 namespace Sitemap.XML.Models
 {
@@ -27,16 +28,23 @@ namespace Sitemap.XML.Models
     {
         public void RefreshSitemap(object sender, EventArgs args)
         {
-            var sites = SitemapManagerConfiguration.GetSiteNames(); 
-            foreach (var site in sites)
-            {
-                var config = new SitemapManagerConfiguration(site);
-                var sitemapManager = new SitemapManager(config);
-                sitemapManager.SubmitSitemapToSearchenginesByHttp();
-
-                if (!config.GenerateRobotsFile) continue;
-                sitemapManager.RegisterSitemapToRobotsFile();
-            }
+	        try
+	        {
+		        var sites = SitemapManagerConfiguration.GetSiteNames();
+		        foreach (var site in sites)
+		        {
+			        var config = new SitemapManagerConfiguration(site);
+			        var sitemapManager = new SitemapManager(config);
+			        sitemapManager.SubmitSitemapToSearchenginesByHttp();
+					//removed because now the robots is generated when it is invoked the url with robots.txt at the end
+			        //if (!config.GenerateRobotsFile) continue;
+			        //sitemapManager.RegisterSitemapToRobotsFile();
+		        }
+	        }
+	        catch (Exception e)
+	        {
+		        Log.Error("Error Sitemap",e,this);
+	        }
         }
     }
 }

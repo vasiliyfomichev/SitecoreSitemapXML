@@ -34,9 +34,10 @@ namespace Sitemap.XML
             public static string FileNameFieldName = "File Name";
             public static string ServerUrlFieldName = "Server Url";
             public static string CleanupBucketPath = "Cleanup Bucket Path";
+	        public static string SitemapNameForRobots = "Sitemap name for Robots";
         }
 
-        public static string SitemapParserUser = @"extranet\Anonymous";
+		public static string SitemapParserUser = @"extranet\Anonymous";
         public static string SitemapModuleSettingsRootItemId = "{6003D67E-0000-4A4D-BFB1-11408B9ADCFD}";
         public static string RobotsFileName = "robots.txt";
         public static string SitemapSubmissionUriFieldName = "Sitemap Submission Uri";

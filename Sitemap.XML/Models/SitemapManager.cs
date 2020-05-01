@@ -108,7 +108,11 @@ namespace Sitemap.XML.Models
             xmlnsAttr.Value = SitemapManagerConfiguration.XmlnsTpl;
             urlsetNode.Attributes.Append(xmlnsAttr);
 
-            doc.AppendChild(urlsetNode);
+	        XmlAttribute xmlnsXhtmlTpl = doc.CreateAttribute("xmlns:xhtml");
+	        xmlnsXhtmlTpl.Value = SitemapManagerConfiguration.XmlnsXhtmlTpl;
+	        urlsetNode.Attributes.Append(xmlnsXhtmlTpl);
+
+			doc.AppendChild(urlsetNode);
 
 
             foreach (var itm in items)
@@ -121,7 +125,11 @@ namespace Sitemap.XML.Models
 
         private XmlDocument BuildSitemapItem(XmlDocument doc, SitemapItem item, Site site)
         {
-            XmlNode urlsetNode = doc.LastChild;
+	        string sitesMultilingual = SitemapManagerConfiguration.SitesMultilingual;
+
+	        var sitesMultilingualList= sitesMultilingual.Split('|').ToList();
+
+			XmlNode urlsetNode = doc.LastChild;
 
             XmlNode urlNode = doc.CreateElement("url");
             urlsetNode.AppendChild(urlNode);
@@ -134,7 +142,30 @@ namespace Sitemap.XML.Models
             urlNode.AppendChild(lastmodNode);
             lastmodNode.AppendChild(doc.CreateTextNode(item.LastModified));
 
-            if (!string.IsNullOrWhiteSpace(item.ChangeFrequency))
+	        var siteIsMultilingual= sitesMultilingualList.FirstOrDefault(x => x.Equals(site.Name));
+
+	        if (siteIsMultilingual != null)
+	        {
+		        if ((item.HrefLangs == null ? false : item.HrefLangs.Count > 0))
+		        {
+			        foreach (SitemapItemHrefLang hrefLang in item.HrefLangs)
+			        {
+				        XmlElement xmlElement = doc.CreateElement("xhtml", "link", SitemapManagerConfiguration.XmlnsXhtmlTpl);
+				        XmlAttribute xmlAttribute = doc.CreateAttribute("rel");
+				        xmlAttribute.Value = "alternate";
+				        xmlElement.Attributes.Append(xmlAttribute);
+				        xmlAttribute = doc.CreateAttribute("hreflang");
+				        xmlAttribute.Value = hrefLang.HrefLang;
+				        xmlElement.Attributes.Append(xmlAttribute);
+				        xmlAttribute = doc.CreateAttribute("href");
+				        xmlAttribute.Value = hrefLang.Href;
+				        xmlElement.Attributes.Append(xmlAttribute);
+				        urlNode.AppendChild(xmlElement);
+			        }
+		        }
+	        }
+
+	        if (!string.IsNullOrWhiteSpace(item.ChangeFrequency))
             {
                 XmlNode changeFrequencyNode = doc.CreateElement("changefreq");
                 urlNode.AppendChild(changeFrequencyNode);
@@ -191,12 +222,12 @@ namespace Sitemap.XML.Models
             StreamWriter strWriter = new StreamWriter(fullPath, false);
             strWriter.Write(xmlContent);
             strWriter.Close();
-
         }
 
         private List<SitemapItem> GetSitemapItems(string rootPath)
         {
             string disTpls = _config.EnabledTemplates;
+	        string excludeItemsField = _config.ExcludedItems;
 
             Database database = Factory.GetDatabase(SitemapManagerConfiguration.WorkingDatabase);
 
@@ -215,6 +246,7 @@ namespace Sitemap.XML.Models
             var sharedDefinitions = Db.SelectItems(string.Format("fast:{0}/*", _config.SitemapConfigurationItemPath));
             var site = Factory.GetSite(_config.SiteName);
             var enabledTemplates = BuildListFromString(disTpls, '|');
+	        var excludeItems = BuildListFromString(excludeItemsField, '|');
             foreach (var sharedDefinition in sharedDefinitions)
             {
                 if (string.IsNullOrWhiteSpace(sharedDefinition[Constants.SharedContent.ContentLocationFieldName]) ||
@@ -242,6 +274,7 @@ namespace Sitemap.XML.Models
 
                 var cleanedSharedItems = from itm in sharedItems
                                          where itm.Template != null && enabledTemplates.Select(t => t.ToLower()).Contains(itm.Template.ID.ToString().ToLower())
+                                                                    && !excludeItems.Contains(itm.ID.ToString())
                                          select itm;
                 var sharedSitemapItems = cleanedSharedItems.Select(i => new SitemapItem(i, site, parentItem));
                 sharedModels.AddRange(sharedSitemapItems);
@@ -252,6 +285,7 @@ namespace Sitemap.XML.Models
 
             var selected = from itm in sitemapItems
                            where itm.Template != null && enabledTemplates.Contains(itm.Template.ID.ToString())
+								 && !excludeItems.Contains(itm.ID.ToString())
                            select itm;
 
             var selectedModels = selected.Select(i => new SitemapItem(i, site, null)).ToList();
@@ -262,8 +296,8 @@ namespace Sitemap.XML.Models
 
         private static List<string> BuildListFromString(string str, char separator)
         {
-            var enabledTemplates = str.Split(separator);
-            var selected = from dtp in enabledTemplates
+            var separatedValues = str.Split(separator);
+            var selected = from dtp in separatedValues
                            where !string.IsNullOrEmpty(dtp)
                            select dtp;
 
@@ -333,7 +367,8 @@ namespace Sitemap.XML.Models
 
         public static bool IsExcludedItem(Item item)
         {
-            return item[Settings.GetSetting("Sitemap.XML.Fields.ExcludeItemFromSitemap", "Exclude From Sitemap")] == "1";
+	        var config = new SitemapManagerConfiguration(Context.GetSiteName());
+	        return config.ExcludedItems.ToLower().Contains(item.ID.ToGuid().ToString());
         }
 
         public static bool ContainsItemsToShow(IEnumerable<Item> items)
@@ -396,15 +431,23 @@ namespace Sitemap.XML.Models
             if (string.IsNullOrWhiteSpace(_config.FileName)) return;
             string robotsPath = MainUtil.MapPath(string.Concat("/", Constants.RobotsFileName));
             StringBuilder sitemapContent = new StringBuilder(string.Empty);
+            
+
             if (File.Exists(robotsPath))
             {
-                StreamReader sr = new StreamReader(robotsPath);
-                sitemapContent.Append(sr.ReadToEnd());
-                sr.Close();
+	            StreamReader sr = new StreamReader(robotsPath);
+	            sitemapContent.Append(sr.ReadToEnd());
+	            sr.Close();
             }
+            else
+            {
+	            sitemapContent.AppendLine("User-agent: *");
+	            sitemapContent.AppendLine("Disallow:");
+			}
 
-            StreamWriter sw = new StreamWriter(robotsPath, false);
-            string sitemapLine = string.Concat("Sitemap: ", _config.FileName);
+			StreamWriter sw = new StreamWriter(robotsPath, false);
+            string sitemapUrl = _config.ServerUrl + "/" + _config.FileName;
+            string sitemapLine = string.Concat("Sitemap: ", sitemapUrl);
             if (!sitemapContent.ToString().Contains(sitemapLine))
             {
                 sitemapContent.AppendLine(sitemapLine);
@@ -413,6 +456,20 @@ namespace Sitemap.XML.Models
             sw.Close();
         }
 
-        #endregion
+	    public string GetRobotSite()
+	    {
+		    StringBuilder sitemapContent = new StringBuilder(string.Empty);
+		    sitemapContent.AppendLine("User-agent: *");
+		    sitemapContent.AppendLine("Disallow:");
+		    string sitemapUrl = _config.ServerUrl + "/" + _config.SitemapNameForRobots;
+		    string sitemapLine = string.Concat("Sitemap: ", sitemapUrl);
+		    if (!sitemapContent.ToString().Contains(sitemapLine))
+		    {
+			    sitemapContent.AppendLine(sitemapLine);
+		    }
+		    return sitemapContent.ToString();
+	    }
+
+	    #endregion
     }
 }
